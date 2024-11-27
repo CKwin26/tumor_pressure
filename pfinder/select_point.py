@@ -184,7 +184,7 @@ def find_min_grayvalue_point(image, x, y, box_size=10):
 
 
 
-def manual_select_keypoints(images, center, titles=["Reference Image", "Moving Image"], scale=0.5):
+def manual_select_keypoints(images, center,image_paths,titles=["Reference Image", "Moving Image"], scale=0.5):
     keypoints = [[], []]
     selected_point = [-1, -1]
     images = [resize_image(image, scale) for image in images]
@@ -281,32 +281,8 @@ def main(image_paths=None, output_dir=None):
         print("Enter the output directory path:")
         output_dir = input().strip()
 
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-        logging.info(f"Created output directory: {output_dir}")
+  
 
-    try:
-        # 加载和处理图像
-        logging.info(f"Loading images from paths: {image_paths}")
-        images = load_images(image_paths)
-        logging.info("Images loaded successfully.")
-
-        # 选择关键点
-        logging.info("Starting manual keypoint selection process.")
-        keypoints_ref, keypoints_mov = manual_select_keypoints(images, titles=["Reference Image", "Moving Image"])
-        logging.info(f"Manual keypoints selected: {len(keypoints_ref)} points in reference, {len(keypoints_mov)} points in moving.")
-
-        if len(keypoints_ref) != len(keypoints_mov):
-            logging.error("Mismatch in the number of keypoints selected.")
-            return
-
-        # 保存关键点到 Excel
-        excel_output_path = os.path.join(output_dir, "matched_points.xlsx")
-        save_to_excel(keypoints_ref, keypoints_mov, excel_output_path)
-        logging.info(f"Matched points saved to {excel_output_path}")
-
-    except Exception as e:
-        logging.error(f"Error during manual keypoint selection: {str(e)}", exc_info=True)
 
 
     images = load_images(image_paths)
@@ -351,14 +327,14 @@ def main(image_paths=None, output_dir=None):
     images=[imageio.imread(path) for path in image_paths]
     print("Select keypoints on the reference and moving images")
     keypoints_ref, keypoints_mov= manual_select_keypoints(
-        [images[0], images[1]], center_ref, titles=["Reference Image", "Moving Image"],scale=0.5)
+        [images[0], images[1]], center_ref, image_paths,titles=["Reference Image", "Moving Image"],scale=0.5)
     print('until here')
     if len(keypoints_ref) != len(keypoints_mov):
         print("Error: The number of keypoints selected on both images must be the same.")
         return
-
     
     excel_output_path = os.path.join(output_dir)
+    
     save_to_excel(keypoints_ref, keypoints_mov, excel_output_path)
     print(f"Matched points and distances saved to {excel_output_path}")
 
@@ -377,19 +353,8 @@ def main(image_paths=None, output_dir=None):
     plt.show()
 
 if __name__ == "__main__":
-    if 'image_paths' not in globals():
-        print("Enter the full paths to the images(reference first and then moving image), separated by a comma:")
-        image_paths = input().strip().split(',')
-        image_paths = [path.strip() for path in image_paths]  # Remove extra spaces
-    '''image_paths = [
-        r'\\eng-fs1.win.rpi.edu\Mills-Lab\Researcher Data\Subbir Parvej\Images\HCT\Embedded MCTS\14th\T1\manual_align_lineROI\\168.tif',
-        r'\\eng-fs1.win.rpi.edu\Mills-Lab\Researcher Data\Subbir Parvej\Images\HCT\Embedded MCTS\14th\T1\manual_align_lineROI\\248.tif'
-    ]'''
     
-    if 'output_dir' not in globals():
-        print("Enter the output directory path:")
-        output_dir = input().strip()
         
-    main(image_paths, output_dir)
+    main()
     
     
