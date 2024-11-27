@@ -121,7 +121,7 @@ def main(image_paths=None, output_dir=None, crop_size=None):
     if crop_size is None:
         logging.info("Prompting user for crop size.")
         crop_size = float(input("How much you want to crop the image? input 0 to 0.99: ").strip().lower())
-      
+
     logging.info(f"Input images: {image_paths}")
     logging.info(f"Output directory: {output_dir}")
     logging.info(f"Crop size: {crop_size}")
@@ -131,8 +131,10 @@ def main(image_paths=None, output_dir=None, crop_size=None):
         images = load_images(image_paths)
         aligned_image, reference_image_cropped = align_images_orb(images[0], images[1], mask_size=1000)
         h, w = reference_image_cropped.shape
+        print(h,w)
         cropped_image = crop_image(aligned_image, int(w*crop_size), w-int(w*crop_size), int(h*crop_size), h-int(h*crop_size))
-        
+        print(int(w*crop_size))
+        print(w-int(w*crop_size))
         # 保存和日志记录
         output_path = os.path.join(output_dir, "aligned_and_cropped.tif")
         imageio.imwrite(output_path, cropped_image)
@@ -150,10 +152,10 @@ def main(image_paths=None, output_dir=None, crop_size=None):
     aligned_image, reference_image_masked = align_images_orb(reference_image, moving_image, mask_size)
     # Crop images to specified dimensions
     h, w = reference_image.shape 
-    x_start= int((w-crop_size*w)/2)
-    x_end= int((w-crop_size*w)/2+w)
-    y_start= int((h-crop_size*h)/2)
-    y_end= int((h-crop_size*h)/2+w)
+    x_start= int(w*crop_size)
+    x_end= w-int(w*crop_size)
+    y_start= int(h*crop_size)
+    y_end= h-int(h*crop_size)
     
     reference_image_cropped = crop_image(reference_image, x_start, x_end, y_start, y_end)
     aligned_image_cropped = crop_image(aligned_image, x_start, x_end, y_start, y_end)
@@ -174,20 +176,8 @@ def main(image_paths=None, output_dir=None, crop_size=None):
 
 if __name__ == "__main__":
     
-    
-    if 'image_paths' not in globals():
-        print("Enter the full paths to the images(reference first and then moving image), separated by a comma:")
-        image_paths = input().strip().split(',')
-        image_paths = [path.strip() for path in image_paths]  # Remove extra spaces
-
-    if 'output_dir' not in globals():
-        print("Enter the output directory path:")
-        output_dir = input().strip()
-        
-    if 'crop_size' not in globals():
-        crop_size = input("How much you want to crop the image? input 0 to 0.99: ").strip().lower()
-        
-    main(image_paths, output_dir,float(crop_size))
+   
+    main()
 
 
 
