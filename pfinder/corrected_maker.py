@@ -234,13 +234,25 @@ def main(image_path=None, excel_path=None, output_path=None, angle_half_range=No
         print("Enter the output path for the processed Excel file:")
         output_path = input().strip()
 
-    if angle_half_range is None:
-        logging.info("Prompting user for angle_half_range.")
-        angle_half_range = float(input("Enter the angle half range (default: 10): ").strip() or 10)
+    
 
     if threshold is None:
         logging.info("Prompting user for threshold.")
         threshold = float(input("Enter the threshold value (default: 1): ").strip() or 1)
+        # Step 1: Load the image and generate the mask
+        image = load_images([image_path])[0]
+        mask, contours = create_largest_contour_mask(image, float(threshold))
+        centroid = compute_centroid(mask)
+
+        
+        # Plot the original image with the mask overlay
+        plt.subplot(1, 2, 1)
+        plt.imshow(image, cmap='gray')
+        plt.imshow(mask, cmap='Reds', alpha=0.5)  # Overlay mask in red
+        plt.scatter(centroid[0], centroid[1], color='blue', label='Centroid', s=10)  # Mark the centroid
+        plt.legend()
+        plt.title("Image with Mask and Centroid")
+        plt.show()
 
    
 
@@ -250,6 +262,44 @@ def main(image_path=None, excel_path=None, output_path=None, angle_half_range=No
     mask, contours = create_largest_contour_mask(image,threshold)
     centroid = compute_centroid(mask)
     contour_points = cpoints(mask, centroid)
+    
+    #show the mask first
+    while True:
+        
+        user_input = input("Do you want this threshold?default=1 (yes/no): ").strip().lower()
+        if user_input == "yes":
+            print("Skipping this step.")
+            break
+        elif user_input == "no":
+            print("Enter the threshold")
+            threshold = input().strip()  # Remove extra space
+            # Step 1: Load the image and generate the mask
+            image = load_images([image_path])[0]
+            mask, contours = create_largest_contour_mask(image, float(threshold))
+            centroid = compute_centroid(mask)
+
+            
+            # Plot the original image with the mask overlay
+            plt.subplot(1, 2, 1)
+            plt.imshow(image, cmap='gray')
+            plt.imshow(mask, cmap='Reds', alpha=0.5)  # Overlay mask in red
+            plt.scatter(centroid[0], centroid[1], color='blue', label='Centroid', s=10)  # Mark the centroid
+            plt.legend()
+            plt.title("Image with Mask and Centroid")
+            plt.show()
+            
+        else:
+            print("Invalid input. Please enter 'yes' or 'no'.")
+            
+    
+    if angle_half_range is None:
+        logging.info("Prompting user for angle_half_range.")
+        angle_half_range = float(input("Enter the angle half range (default: 10): ").strip() or 10)
+    
+    
+    
+    
+    
     # Step 2: Compute tangent and secant lines for visualization
     tan_lines, sec_lines = compute_tan_sec_lines(contour_points, angle_half_range)
     
@@ -298,7 +348,7 @@ def main(image_path=None, excel_path=None, output_path=None, angle_half_range=No
                 continue
         else:
             print("Invalid input. Please enter 'yes' or 'no'.")
-
+   
     
 
 
@@ -331,11 +381,11 @@ def main(image_path=None, excel_path=None, output_path=None, angle_half_range=No
     for i in range(len(x1)):
         corrected_x, corrected_y = project_to_refer_normal_with_cases(x1[i], y1[i], x2[i], y2[i], contour_points, angle_half_range)
         r = ((contour_points[i][0]-centroid[0]) **2+ (contour_points[i][1]-centroid[1])**2)**0.5
-        c_dist = ((x1[i] - centroid[0]) ** 2 + (y1[i] - centroid[1]) ** 2) ** 0.5 #distance from centroid to (x1, y1)
-        c_disp = ((corrected_x - x1[i]) ** 2 + (corrected_y - y1[i]) ** 2) ** 0.5 #displacement from (x1, y1) to corrected (corrected_x, corrected_y)
+        c_dist = (((x1[i] - centroid[0]) ** 2 + (y1[i] - centroid[1]) ** 2) ** 0.5)/r #distance from centroid to (x1, y1)
+        c_disp = (((corrected_x - x1[i]) ** 2 + (corrected_y - y1[i]) ** 2) ** 0.5)/r #displacement from (x1, y1) to corrected (corrected_x, corrected_y)
         #corrected_points.append((x1[i], y1[i], x2[i], y2[i], corrected_x, corrected_y,r))
         corrected_points_new.append((c_dist, c_disp, r))
-        output_path = rf"\\eng-fs1.win.rpi.edu\Mills-Lab\Researcher Data\Quincy Wang\pfinder\functiontest\MCFT2{i}.xlsx"
+       
 
 
 
@@ -345,9 +395,29 @@ def main(image_path=None, excel_path=None, output_path=None, angle_half_range=No
     corrected_df = pd.DataFrame(corrected_points_new, columns=['c_dist', 'c_disp', 'r'])
     corrected_df.to_excel(output_path, index=False)
 
-  
+    # Generate angle and radius information from contour points
+    angles = [np.arctan2(y - centroid[1], x - centroid[0]) * 180 / np.pi + 180 for x, y, _ in contour_points]
+    radii = [((x - centroid[0]) ** 2 + (y - centroid[1]) ** 2) ** 0.5 for x, y, _ in contour_points]  # Calculate radius from centroid
     
-  # Step 5: Visualize the results
+    # Plot Radius vs Angle
+    plt.figure(figsize=(10, 6))
+    plt.scatter(angles, radii, color='blue', alpha=0.7, label="Radius vs Angle")
+    plt.xlabel("Angle (degrees)")
+    plt.ylabel("Radius (pixels)")
+    plt.title("Radius vs Angle")
+    plt.grid(alpha=0.5)
+    plt.legend()
+    
+    # Save the Radius vs Angle plot
+    radius_vs_angle_path = output_path.replace(".xlsx", "_radius_vs_angle.png")
+    plt.savefig(radius_vs_angle_path)
+    plt.show()
+    
+    print(f"Radius vs Angle plot saved at: {radius_vs_angle_path}")
+
+
+    
+    # Step 5: Visualize the results
     plt.figure(figsize=(10, 10))
 
     # Plot the original image with the mask overlay
@@ -391,54 +461,15 @@ for i in range(1):
         
         
         
-        # Step 1: Load the image and generate the mask
-        image = load_images([image_path])[0]
-        mask, contours = create_largest_contour_mask(image, float(threshold))
-        centroid = compute_centroid(mask)
-        contour_points = cpoints(mask, centroid)
-        
-        # Plot the original image with the mask overlay
-        plt.subplot(1, 2, 1)
-        plt.imshow(image, cmap='gray')
-        plt.imshow(mask, cmap='Reds', alpha=0.5)  # Overlay mask in red
-        plt.scatter(centroid[0], centroid[1], color='blue', label='Centroid', s=10)  # Mark the centroid
-        plt.legend()
-        plt.title("Image with Mask and Centroid")
-        plt.show()
         
         
         
-        while True:
-            user_input = input("Do you want this threshold?default=1 (yes/no): ").strip().lower()
-            if user_input == "yes":
-                print("Skipping this step.")
-                break
-            elif user_input == "no":
-                print("Enter the threshold")
-                threshold = input().strip()  # Remove extra space
-                # Step 1: Load the image and generate the mask
-                image = load_images([image_path])[0]
-                mask, contours = create_largest_contour_mask(image, float(threshold))
-                centroid = compute_centroid(mask)
- 
-                
-                # Plot the original image with the mask overlay
-                plt.subplot(1, 2, 1)
-                plt.imshow(image, cmap='gray')
-                plt.imshow(mask, cmap='Reds', alpha=0.5)  # Overlay mask in red
-                plt.scatter(centroid[0], centroid[1], color='blue', label='Centroid', s=10)  # Mark the centroid
-                plt.legend()
-                plt.title("Image with Mask and Centroid")
-                plt.show()
-                
-            else:
-                print("Invalid input. Please enter 'yes' or 'no'.")
-                
+        
                 
         
         
         
         
-        main(image_path, excel_path, output_path,angle_half_range,float(threshold))
+        main()
         selected_index = 10  # Example index
         
