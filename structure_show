@@ -1,0 +1,17 @@
+pfinder/                      # Root directory for the module
+├── pfinder/                  # Package directory
+│   ├── __init__.py           # Makes the directory a package
+│   ├── img_reg.py            # Image registration module
+│   ├── select_point.py       # Manual keypoint selection module
+│   ├── corrected_maker.py    # Point correction module
+│   ├── pressure_calculation.py # Pressure calculation module
+├── tests/                    # Directory for test scripts
+│   ├── test_img_reg.py       # Tests for img_reg
+│   ├── test_select_point.py  # Tests for select_point
+│   ├── test_corrected_maker.py # Tests for corrected_maker
+│   ├── test_pressure_calculation.py # Tests for pressure_calculation
+├── README.md                 # Documentation about the project
+├── LICENSE                   # License file (e.g., MIT License)
+├── .gitignore                # Files and directories to ignore in Git
+├── setup.py                  # Setup script for installing the package
+└── requirements.txt          # List of dependencies
