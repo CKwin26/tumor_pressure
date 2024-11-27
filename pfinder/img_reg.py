@@ -120,8 +120,8 @@ def main(image_paths=None, output_dir=None, crop_size=None):
 
     if crop_size is None:
         logging.info("Prompting user for crop size.")
-        crop_size = input("How much you want to crop the image? input 0 to 0.99: ").strip().lower()
-
+        crop_size = float(input("How much you want to crop the image? input 0 to 0.99: ").strip().lower())
+      
     logging.info(f"Input images: {image_paths}")
     logging.info(f"Output directory: {output_dir}")
     logging.info(f"Crop size: {crop_size}")
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     if 'crop_size' not in globals():
         crop_size = input("How much you want to crop the image? input 0 to 0.99: ").strip().lower()
         
-    main(image_paths, output_dir,crop_size)
+    main(image_paths, output_dir,float(crop_size))
 
 
 
